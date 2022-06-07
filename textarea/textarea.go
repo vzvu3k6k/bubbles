@@ -172,7 +172,7 @@ type Model struct {
 	Viewport *viewport.Model
 }
 
-// NewModel creates a new model with default settings.
+// New creates a new model with default settings.
 func New() Model {
 	vp := viewport.New(0, 0)
 	vp.KeyMap = viewport.KeyMap{}
@@ -242,7 +242,7 @@ func (m Model) Cursor() int {
 	return m.col
 }
 
-// Cursor returns the line position.
+// Line returns the line position.
 func (m Model) Line() int {
 	return m.row
 }
@@ -294,7 +294,7 @@ func (m Model) CursorMode() CursorMode {
 	return m.cursorMode
 }
 
-// CursorMode sets the model's cursor mode. This method returns a command.
+// SetCursorMode sets the model's cursor mode. This method returns a command.
 //
 // For available cursor modes, see type CursorMode.
 func (m *Model) SetCursorMode(mode CursorMode) tea.Cmd {
@@ -416,7 +416,7 @@ func (m *Model) handleOverflow() {
 				for bp > m.col+1 && !unicode.IsSpace(l[bp]) {
 					bp--
 				}
-				var overflow []rune = make([]rune, len(l[bp:]))
+				var overflow = make([]rune, len(l[bp:]))
 				copy(overflow, l[bp:])
 				m.value[i] = l[:bp]
 				m.value[i+1] = concat(overflow, m.value[i+1])
@@ -622,7 +622,7 @@ func (m *Model) wordRight() bool {
 // Returns whether or not the cursor blink should be reset.
 func (m *Model) lineDown(n int) bool {
 	if m.row < m.LineLimit-1 {
-		m.row++
+		m.row += n
 	}
 	m.Viewport.SetYOffset(m.row - m.Height/2)
 	return true
@@ -630,9 +630,9 @@ func (m *Model) lineDown(n int) bool {
 
 // lineUp moves the cursor up by `n` lines.
 // returns whether or not the cursor blink should be reset.
-func (m *Model) lineUp(n int) bool {
+func (m *Model) lineUp(n int) bool { //nolint
 	if m.row > 0 {
-		m.row--
+		m.row -= n
 	}
 	m.Viewport.SetYOffset(m.row - m.Height/2)
 	return true
@@ -869,7 +869,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 				if m.col > m.Width && m.row <= m.LineLimit-1 {
 					newLines := m.col / m.Width
-					m.row += newLines
+					m.lineDown(newLines)
 					m.col = (m.col % m.Width) + newLines
 					// Re-center the viewport
 					m.Viewport.SetYOffset(m.row - m.Height/2)
