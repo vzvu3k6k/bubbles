@@ -83,6 +83,20 @@ const (
 	CursorHide
 )
 
+// ScrollBehaviour describes the behavior of text vertical scrolling.
+type ScrollBehaviour int
+
+// Available scroll behaviors.
+const (
+	// ScrollNone disables vertical scrolling.
+	ScrollNone ScrollBehaviour = iota
+	// ScrollCenter keeps the cursor line in the center of the viewport.
+	ScrollCenter
+	// ScrollOverflow scrolls the viewport only if the cursor line overflows to
+	// the next page.
+	ScrollOverflow
+)
+
 // String returns a the cursor mode in a human-readable format. This method is
 // provisional and for informational purposes only.
 func (c CursorMode) String() string {
@@ -135,6 +149,10 @@ type Model struct {
 	// if there are more lines that permitted height.
 	Height int
 
+	// ScrollBehaviour is the behavior by which the textarea scrolls the
+	// overflowing text. Can be either ScrollCenter or ScrollOverflow.
+	ScrollBehaviour ScrollBehaviour
+
 	// The ID of this Model as it relates to other textinput Models.
 	id int
 
@@ -186,6 +204,7 @@ func New() Model {
 		LineLimit:        1,
 		Height:           1,
 		Width:            80,
+		ScrollBehaviour:  ScrollCenter,
 
 		id:               nextID(),
 		value:            nil,
@@ -628,7 +647,7 @@ func (m *Model) lineDown(n int) bool {
 	if m.row < m.LineLimit-1 {
 		m.row += n
 	}
-	m.viewport.SetYOffset(m.row - m.Height/2)
+	m.repositionView()
 	return true
 }
 
@@ -638,8 +657,19 @@ func (m *Model) lineUp(n int) bool { //nolint
 	if m.row > 0 {
 		m.row -= n
 	}
-	m.viewport.SetYOffset(m.row - m.Height/2)
+	m.repositionView()
 	return true
+}
+
+// repositionView repositions the view of the viewport based on the defined
+// scrolling behavior.
+func (m *Model) repositionView() {
+	switch m.ScrollBehaviour {
+	case ScrollCenter:
+		m.viewport.SetYOffset(m.row - m.Height/2)
+	case ScrollNone:
+		// Do nothing ...
+	}
 }
 
 func (m Model) echoTransform(v string) string {
@@ -877,8 +907,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					newLines := m.col / m.Width
 					m.lineDown(newLines)
 					m.col = (m.col % m.Width) + newLines
-					// Re-center the viewport
-					m.viewport.SetYOffset(m.row - m.Height/2)
+					m.repositionView()
 				}
 			}
 		}
