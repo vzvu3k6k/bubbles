@@ -121,6 +121,49 @@ func TestCharLimit(t *testing.T) {
 	}
 }
 
+func TestVerticalScrolling(t *testing.T) {
+	textarea := newTextArea()
+
+	// Since Height is 1 and LineLimit is 5, the text area should vertically
+	// scroll when the input is longer than the height.
+	textarea.LineLimit = 5
+	textarea.Height = 1
+	textarea.Width = 20
+	textarea.CharLimit = 100
+
+	textarea, _ = textarea.Update(initialBlinkMsg{})
+
+	input := "This is a really long line that should wrap around the text area."
+
+	for _, k := range []rune(input) {
+		textarea, _ = textarea.Update(keyPress(k))
+	}
+
+	view := textarea.View()
+
+	// The view should contain the first "line" of the input.
+	if !strings.Contains(view, "This is a really") {
+		t.Log(view)
+		t.Error("Textarea did not render the input")
+	}
+
+	// But we should be able to scroll to see the next line.
+	// Let's scroll down for each line to view the full input.
+	lines := []string{
+		"long line that",
+		"should wrap around",
+		"the text area.",
+	}
+	for _, line := range lines {
+		textarea.viewport.LineDown(1)
+		view = textarea.View()
+		if !strings.Contains(view, line) {
+			t.Log(view)
+			t.Error("Textarea did not render the correct scrolled input")
+		}
+	}
+}
+
 func newTextArea() Model {
 	textarea := New()
 
