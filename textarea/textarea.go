@@ -95,6 +95,10 @@ const (
 	// ScrollOverflow scrolls the viewport only if the cursor line overflows to
 	// the next page.
 	ScrollOverflow
+	// ScrollBottom tries to keep the cursor line at the bottom of the viewport.
+	ScrollBottom
+	// ScrollTop tries keeps the cursor line at the top of the viewport.
+	ScrollTop
 )
 
 // String returns a the cursor mode in a human-readable format. This method is
@@ -204,7 +208,7 @@ func New() Model {
 		LineLimit:        1,
 		Height:           1,
 		Width:            80,
-		ScrollBehaviour:  ScrollCenter,
+		ScrollBehaviour:  ScrollOverflow,
 
 		id:               nextID(),
 		value:            nil,
@@ -669,6 +673,15 @@ func (m *Model) repositionView() {
 		m.viewport.SetYOffset(m.row - m.Height/2)
 	case ScrollNone:
 		// Do nothing ...
+	case ScrollOverflow:
+		// Essentially, we want to keep track of what "page" we are on.
+		// If the row passes the page boundary, scroll to the next page.
+		// If the row is less than the page boundary, scroll to the previous.
+		m.viewport.SetYOffset((m.row / m.Height) * m.Height)
+	case ScrollBottom:
+		m.viewport.SetYOffset(max(m.row-m.Height+1, 0))
+	case ScrollTop:
+		m.viewport.SetYOffset(m.row)
 	}
 }
 
