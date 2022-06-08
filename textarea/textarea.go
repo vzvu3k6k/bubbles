@@ -938,6 +938,10 @@ func (m Model) View() string {
 		return m.placeholderView()
 	}
 
+	if m.value == nil {
+		return ""
+	}
+
 	var (
 		str             string
 		styleText       = m.TextStyle.Inline(true).Render
