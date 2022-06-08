@@ -474,6 +474,38 @@ func (m *Model) canHandleMoreInput(length int) bool {
 	return spaceUsed+length < spaceRemaining
 }
 
+// mergeLine merges the current line with the next line.
+func (m *Model) mergeLines() {
+	// Don't do anything if we are on the last line.
+	// There is nothing to bring up.
+	if m.row == m.LineLimit-1 {
+		return
+	}
+
+	nextLineLength := rw.StringWidth(string(m.value[m.row+1]))
+	currentLineLength := rw.StringWidth(string(m.value[m.row]))
+	remainingSpace := m.Width - currentLineLength
+
+	// We have enough space to fully merge the next line
+	// so let's do that and then shift all lines up by one.
+	if remainingSpace > nextLineLength {
+		m.value[m.row] = append(m.value[m.row], m.value[m.row+1]...)
+		// Shift all the lines up by one.
+		for i := m.row + 1; i < m.LineLimit-1; i++ {
+			m.value[i] = m.value[i+1]
+		}
+		m.value[m.LineLimit-1] = nil
+		return
+	}
+
+	// We have enough space to partially merge the next line
+	if remainingSpace > 0 {
+		bp := min(remainingSpace, len(m.value[m.row+1]))
+		m.value[m.row] = concat(m.value[m.row], m.value[m.row+1][:bp])
+		m.value[m.row+1] = m.value[m.row+1][bp:]
+	}
+}
+
 // deleteBeforeCursor deletes all text before the cursor. Returns whether or
 // not the cursor blink should be reset.
 func (m *Model) deleteBeforeCursor() bool {
@@ -834,11 +866,19 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if len(m.value[m.row]) > 0 && m.col < len(m.value[m.row]) {
 				m.value[m.row] = append(m.value[m.row][:m.col], m.value[m.row][m.col+1:]...)
 			}
+			atEnd := m.col == len(m.value[m.row])
+			if atEnd {
+				m.mergeLines()
+			}
 		case tea.KeyCtrlE, tea.KeyEnd: // ^E, go to end
 			resetBlink = m.cursorEnd()
 		case tea.KeyCtrlK: // ^K, kill text after cursor
 			m.handleColumnBoundaries()
+			wasAtEnd := m.col == len(m.value[m.row])
 			resetBlink = m.deleteAfterCursor()
+			if wasAtEnd {
+				m.mergeLines()
+			}
 		case tea.KeyCtrlU: // ^U, kill text before cursor
 			m.handleColumnBoundaries()
 			resetBlink = m.deleteBeforeCursor()
