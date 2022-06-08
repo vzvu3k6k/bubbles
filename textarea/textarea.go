@@ -166,9 +166,9 @@ type Model struct {
 	// lineNumberFormat is the format string used to display line numbers.
 	lineNumberFormat string
 
-	// Viewport is the vertically-scrollable Viewport of the multi-line text
+	// viewport is the vertically-scrollable viewport of the multi-line text
 	// input.
-	Viewport *viewport.Model
+	viewport *viewport.Model
 }
 
 // New creates a new model with default settings.
@@ -185,6 +185,7 @@ func New() Model {
 		LineNumberStyle:  lipgloss.NewStyle().Foreground(lipgloss.Color("240")),
 		LineLimit:        1,
 		Height:           1,
+		Width:            80,
 
 		id:               nextID(),
 		value:            nil,
@@ -199,7 +200,7 @@ func New() Model {
 			ctx: context.Background(),
 		},
 
-		Viewport: &vp,
+		viewport: &vp,
 	}
 }
 
@@ -345,7 +346,7 @@ func (m *Model) Reset() bool {
 	m.value = make([][]rune, m.LineLimit)
 	m.col = 0
 	m.row = 0
-	m.Viewport.GotoTop()
+	m.viewport.GotoTop()
 	return m.setCursor(0)
 }
 
@@ -627,7 +628,7 @@ func (m *Model) lineDown(n int) bool {
 	if m.row < m.LineLimit-1 {
 		m.row += n
 	}
-	m.Viewport.SetYOffset(m.row - m.Height/2)
+	m.viewport.SetYOffset(m.row - m.Height/2)
 	return true
 }
 
@@ -637,7 +638,7 @@ func (m *Model) lineUp(n int) bool { //nolint
 	if m.row > 0 {
 		m.row -= n
 	}
-	m.Viewport.SetYOffset(m.row - m.Height/2)
+	m.viewport.SetYOffset(m.row - m.Height/2)
 	return true
 }
 
@@ -660,10 +661,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if m.value == nil {
+	// Let's make sure that the value is set and that we have the updated
+	// height for our text area.
+	if m.value == nil || m.Height != m.viewport.Height || m.Width != m.viewport.Width {
 		m.value = make([][]rune, m.LineLimit)
-		m.Viewport.Height = m.Height
-		m.Viewport.Width = m.Width
+		m.viewport.Height = m.Height
+		m.viewport.Width = m.Width
 	}
 
 	var resetBlink bool
@@ -875,7 +878,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					m.lineDown(newLines)
 					m.col = (m.col % m.Width) + newLines
 					// Re-center the viewport
-					m.Viewport.SetYOffset(m.row - m.Height/2)
+					m.viewport.SetYOffset(m.row - m.Height/2)
 				}
 			}
 		}
@@ -921,8 +924,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Err = msg
 	}
 
-	vp, cmd := m.Viewport.Update(msg)
-	m.Viewport = &vp
+	vp, cmd := m.viewport.Update(msg)
+	m.viewport = &vp
 	cmds = append(cmds, cmd)
 
 	m.handleOverflow()
@@ -984,8 +987,8 @@ func (m Model) View() string {
 		str += v + "\n"
 	}
 
-	m.Viewport.SetContent(str)
-	return m.Viewport.View()
+	m.viewport.SetContent(str)
+	return m.viewport.View()
 }
 
 // placeholderView returns the prompt and placeholder view, if any.
@@ -1029,8 +1032,8 @@ func (m Model) placeholderView() string {
 		}
 	}
 
-	m.Viewport.SetContent(v)
-	return m.Viewport.View()
+	m.viewport.SetContent(v)
+	return m.viewport.View()
 }
 
 // cursorView styles the cursor.
