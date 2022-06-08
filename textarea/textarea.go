@@ -953,8 +953,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			// Input a regular character
 			if m.canHandleMoreInput(msgw) {
+				m.handleColumnBoundaries()
 				m.value[m.row] = append(m.value[m.row][:m.col], append(msg.Runes, m.value[m.row][m.col:]...)...)
-				resetBlink = m.setCursor(m.col + msgw)
+				resetBlink = m.setCursor(m.col + len(msg.Runes))
 
 				if m.col > m.Width && m.row <= m.LineLimit-1 {
 					newLines := m.col / m.Width
