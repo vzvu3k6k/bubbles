@@ -98,12 +98,11 @@ type Model struct {
 	Err error
 
 	// General settings.
-	Prompt        string
-	Placeholder   string
-	BlinkSpeed    time.Duration
-	EchoMode      EchoMode
-	EchoCharacter rune
-
+	Prompt          string
+	Placeholder     string
+	BlinkSpeed      time.Duration
+	EchoMode        EchoMode
+	EchoCharacter   rune
 	ShowLineNumbers bool
 
 	// Styles. These will be applied as inline styles.
@@ -181,7 +180,7 @@ func New() Model {
 		Prompt:           "│ ",
 		BlinkSpeed:       defaultBlinkSpeed,
 		EchoCharacter:    '*',
-		CharLimit:        0,
+		CharLimit:        80,
 		PlaceholderStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("240")),
 		LineNumberStyle:  lipgloss.NewStyle().Foreground(lipgloss.Color("240")),
 		LineLimit:        1,
@@ -220,6 +219,10 @@ func (m *Model) SetValue(s string) {
 
 // Value returns the value of the text input.
 func (m Model) Value() string {
+	if m.value == nil {
+		return ""
+	}
+
 	var v string
 	for _, l := range m.value {
 		v += string(l)
@@ -936,10 +939,6 @@ func (m Model) View() string {
 	// Placeholder text
 	if m.Value() == "" && m.row == 0 && m.Placeholder != "" {
 		return m.placeholderView()
-	}
-
-	if m.value == nil {
-		return ""
 	}
 
 	var (
