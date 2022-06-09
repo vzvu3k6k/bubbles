@@ -164,6 +164,69 @@ func TestVerticalScrolling(t *testing.T) {
 	}
 }
 
+func TestScrollBehaviors(t *testing.T) {
+	textarea := newTextArea()
+
+	textarea.LineLimit = 20
+	textarea.Height = 5
+	textarea.Width = 8
+	textarea.CharLimit = 200
+
+	textarea.ScrollBehavior = ScrollOverflow
+
+	textarea, _ = textarea.Update(initialBlinkMsg{})
+
+	input := "Line 1 Line 2 Line 3 Line 4 Line 5 Line 6 Line 7 Line 8 Line 9"
+
+	for _, k := range []rune(input) {
+		textarea, _ = textarea.Update(keyPress(k))
+		textarea.View()
+	}
+
+	// Typing these 9 lines should cause the text area to scroll. The text area
+	// should have an offset of 4 lines to display the 9th line as the viewport
+	// is 5 lines tall.
+
+	if textarea.viewport.YOffset != 4 {
+		t.Log(textarea.View())
+		t.Log(textarea.row)
+		t.Log(textarea.viewport.YOffset)
+		t.Error("Textarea did not scroll down one line")
+	}
+
+	// Now let's scroll up.
+	oldRow := textarea.row
+	oldOffset := textarea.viewport.YOffset
+
+	textarea.lineUp(2)
+	textarea.View()
+
+	// The cursor should be two lines higher but the viewport should be the same.
+	// Since it is still contained in the window
+	if textarea.row != oldRow-2 || textarea.viewport.YOffset != oldOffset {
+		t.Log(textarea.View())
+		t.Log(textarea.row)
+		t.Log(textarea.viewport.YOffset)
+		t.Error("Textarea did not scroll up two lines or did not maintain the scroll offset")
+	}
+
+	// Let's scroll up 3 more lines. This time the cursor should be 3 lines
+	// higher and the viewport should be 2 lines higher since it will
+	// underflow.
+	oldRow = textarea.row
+	oldOffset = textarea.viewport.YOffset
+
+	textarea.lineUp(4)
+	textarea.View()
+
+	if textarea.row != oldRow-4 || textarea.viewport.YOffset != oldOffset-2 {
+		t.Log(textarea.View())
+		t.Log("Row: ", oldRow, textarea.row)
+		t.Log("YOffset: ", oldOffset, textarea.viewport.YOffset)
+		t.Error("Textarea did not scroll up three lines or did not shift the viewport")
+	}
+}
+
 func newTextArea() Model {
 	textarea := New()
 

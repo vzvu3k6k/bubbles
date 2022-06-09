@@ -713,9 +713,9 @@ func (m *Model) repositionView() {
 		min := m.viewport.YOffset
 		max := m.viewport.YOffset + m.viewport.Height - 1
 		if m.row < min {
-			m.viewport.LineUp(1)
+			m.viewport.LineUp(min - m.row)
 		} else if m.row > max {
-			m.viewport.LineDown(1)
+			m.viewport.LineDown(m.row - max)
 		}
 	case ScrollPage:
 		// Essentially, we want to keep track of what "page" we are on.
