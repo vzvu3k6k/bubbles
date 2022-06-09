@@ -83,15 +83,18 @@ const (
 	CursorHide
 )
 
-// ScrollBehaviour describes the behavior of text vertical scrolling.
-type ScrollBehaviour int
+// ScrollBehavior describes the behavior of text vertical scrolling.
+type ScrollBehavior int
 
 // Available scroll behaviors.
 const (
 	// ScrollNone disables vertical scrolling.
-	ScrollNone ScrollBehaviour = iota
+	ScrollNone ScrollBehavior = iota
 	// ScrollCenter keeps the cursor line in the center of the viewport.
 	ScrollCenter
+	// ScrollPage scrolls full pages when the cursor reaches the end of the
+	// or beginning of the viewport.
+	ScrollPage
 	// ScrollOverflow scrolls the viewport only if the cursor line overflows to
 	// the next page.
 	ScrollOverflow
@@ -153,9 +156,9 @@ type Model struct {
 	// if there are more lines that permitted height.
 	Height int
 
-	// ScrollBehaviour is the behavior by which the textarea scrolls the
+	// ScrollBehavior is the behavior by which the textarea scrolls the
 	// overflowing text. Can be either ScrollCenter or ScrollOverflow.
-	ScrollBehaviour ScrollBehaviour
+	ScrollBehavior ScrollBehavior
 
 	// The ID of this Model as it relates to other textinput Models.
 	id int
@@ -208,7 +211,7 @@ func New() Model {
 		LineLimit:        1,
 		Height:           1,
 		Width:            80,
-		ScrollBehaviour:  ScrollOverflow,
+		ScrollBehavior:   ScrollPage,
 
 		id:               nextID(),
 		value:            nil,
@@ -700,12 +703,13 @@ func (m *Model) lineUp(n int) bool { //nolint
 // repositionView repositions the view of the viewport based on the defined
 // scrolling behavior.
 func (m *Model) repositionView() {
-	switch m.ScrollBehaviour {
+	switch m.ScrollBehavior {
 	case ScrollCenter:
 		m.viewport.SetYOffset(m.row - m.Height/2)
 	case ScrollNone:
 		// Do nothing ...
 	case ScrollOverflow:
+	case ScrollPage:
 		// Essentially, we want to keep track of what "page" we are on.
 		// If the row passes the page boundary, scroll to the next page.
 		// If the row is less than the page boundary, scroll to the previous.
