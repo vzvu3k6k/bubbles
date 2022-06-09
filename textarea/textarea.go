@@ -211,7 +211,7 @@ func New() Model {
 		LineLimit:        1,
 		Height:           1,
 		Width:            80,
-		ScrollBehavior:   ScrollPage,
+		ScrollBehavior:   ScrollOverflow,
 
 		id:               nextID(),
 		value:            nil,
@@ -709,6 +709,14 @@ func (m *Model) repositionView() {
 	case ScrollNone:
 		// Do nothing ...
 	case ScrollOverflow:
+		// Determine the window which we are viewing
+		min := m.viewport.YOffset
+		max := m.viewport.YOffset + m.viewport.Height - 1
+		if m.row < min {
+			m.viewport.LineUp(1)
+		} else if m.row > max {
+			m.viewport.LineDown(1)
+		}
 	case ScrollPage:
 		// Essentially, we want to keep track of what "page" we are on.
 		// If the row passes the page boundary, scroll to the next page.
