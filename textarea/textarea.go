@@ -927,7 +927,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			// If the cursor is at the end of the line let's move the cursor to
 			// the next line
-			if rw.StringWidth(string(m.value[m.row][:m.col])) >= m.Width-1 {
+			if rw.StringWidth(string(m.value[m.row][:m.col]))+msgw >= m.Width {
 				// We've hit the end of the line, let's wrap the word we are
 				// currently typing to the next line.
 				bp := m.col - 1
