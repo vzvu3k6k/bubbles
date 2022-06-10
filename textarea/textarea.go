@@ -426,7 +426,7 @@ func (m *Model) handlePaste(v string) bool {
 func (m *Model) handleOverflow() {
 	for i := 0; i < len(m.value)-1; i++ {
 		l := m.value[i]
-		if rw.StringWidth(string(l)) < m.Width {
+		if rw.StringWidth(string(l)) <= m.Width {
 			// The line is less than the maximum width, so let's move on to the
 			// next line.
 			continue
@@ -927,7 +927,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			// If the cursor is at the end of the line let's move the cursor to
 			// the next line
-			if rw.StringWidth(string(m.value[m.row][:m.col]))+msgw >= m.Width {
+			if rw.StringWidth(string(m.value[m.row][:m.col]))+msgw > m.Width {
 				// We've hit the end of the line, let's wrap the word we are
 				// currently typing to the next line.
 				bp := m.col - 1
@@ -940,10 +940,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if bp == 0 {
 					// There is no space on the previous line, so let's just
 					// split the line at the column
-					bp = m.col - 1
+					bp = m.col
 				}
 
-				word := string(m.value[m.row][(bp + 1):])
+				word := strings.TrimSpace(string(m.value[m.row][(bp):]))
 				m.value[m.row] = m.value[m.row][:bp]
 
 				m.lineDown(1)
