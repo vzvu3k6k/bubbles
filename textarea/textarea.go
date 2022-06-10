@@ -157,7 +157,7 @@ type Model struct {
 	Height int
 
 	// ScrollBehavior is the behavior by which the textarea scrolls the
-	// overflowing text. Can be either ScrollCenter or ScrollOverflow.
+	// overflowing text.
 	ScrollBehavior ScrollBehavior
 
 	// The ID of this Model as it relates to other textinput Models.
